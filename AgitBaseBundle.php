@@ -11,7 +11,6 @@ namespace Agit\BaseBundle
 {
     use Agit\BaseBundle\DependencyInjection\RegisterPluggableServicesCompilerPass;
     use Agit\BaseBundle\DependencyInjection\RegisterProcessorsCompilerPass;
-    use Agit\BaseBundle\DependencyInjection\RegisterValidatorsCompilerPass;
     use Symfony\Component\DependencyInjection\Compiler\PassConfig;
     use Symfony\Component\DependencyInjection\ContainerBuilder;
     use Symfony\Component\HttpKernel\Bundle\Bundle;
@@ -26,11 +25,6 @@ namespace Agit\BaseBundle
 
             $containerBuilder->addCompilerPass(
                 new RegisterPluggableServicesCompilerPass(),
-                PassConfig::TYPE_AFTER_REMOVING
-            );
-
-            $containerBuilder->addCompilerPass(
-                new RegisterValidatorsCompilerPass(),
                 PassConfig::TYPE_AFTER_REMOVING
             );
         }

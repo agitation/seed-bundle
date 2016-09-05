@@ -29,5 +29,4 @@ services:
 
 imports :
     - { resource: services.intl.yml }
-    - { resource: services.validation.yml }
     - { resource: services.pluggable.yml }
