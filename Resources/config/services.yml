@@ -28,5 +28,4 @@ services:
         arguments: [ "@event_dispatcher" ]
 
 imports :
-    - { resource: services.intl.yml }
     - { resource: services.pluggable.yml }
