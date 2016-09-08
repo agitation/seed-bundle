@@ -23,9 +23,5 @@ services:
         class: Agit\BaseBundle\Service\UrlService
         arguments: [ "%agit.common.domain.app%", "%agit.common.domain.cdn%", "%agit.common.force.https%" ]
 
-    agit.cron:
-        class: Agit\BaseBundle\Service\CronService
-        arguments: [ "@event_dispatcher" ]
-
 imports :
     - { resource: services.pluggable.yml }
