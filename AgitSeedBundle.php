@@ -9,6 +9,8 @@
 
 namespace Agit\SeedBundle;
 
+use Symfony\Component\HttpKernel\Bundle\Bundle;
+
 class AgitSeedBundle extends Bundle
 {
 }

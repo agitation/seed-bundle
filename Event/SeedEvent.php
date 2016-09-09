@@ -21,7 +21,8 @@ class SeedEvent extends Event
         $this->command = $command;
     }
 
-    public function addSeed($entity, array $entries)
+    public function addSeedEntry($entityName, $entityData, $doUpdate = false)
     {
+        $this->command->addSeedEntry($entityName, $entityData, $doUpdate);
     }
 }
