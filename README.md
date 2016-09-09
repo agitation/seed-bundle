@@ -1,5 +1,4 @@
-# AgitBaseBundle
+# AgitSeedBundle
 
-The AgitBaseBundle is a Symfony2 bundle for the Agitation components. It
-contains some common classes and traits to be used by other Agitation and
-Tixys bundles.
+The AgitSeedBundle is a Symfony2 bundle which allows populating a database
+with certain values for a given entity.

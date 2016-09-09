@@ -1,27 +1,27 @@
 <?php
 
 /*
- * @package    agitation/base-bundle
- * @link       http://github.com/agitation/base-bundle
+ * @package    agitation/seed-bundle
+ * @link       http://github.com/agitation/seed-bundle
  * @author     Alexander Günsche
  * @license    http://opensource.org/licenses/MIT
  */
 
-namespace Agit\BaseBundle\Command;
+namespace Agit\SeedBundle\Command;
 
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ProcessPluginsCommand extends ContainerAwareCommand
+class SeedUpdateCommand extends ContainerAwareCommand
 {
     use SingletonCommandTrait;
 
     protected function configure()
     {
         $this
-            ->setName("agit:plugins:process")
-            ->setDescription("Loads and registers all pluggable services and their plugins.");
+            ->setName("agit:seeds:update")
+            ->setDescription("Loads and insert seeds in the database, or updates them, if services request this.");
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -29,7 +29,5 @@ class ProcessPluginsCommand extends ContainerAwareCommand
         if (! $this->flock(__FILE__)) {
             return;
         }
-
-        $this->getContainer()->get("agit.pluggable.processor")->processPlugins();
     }
 }
