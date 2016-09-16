@@ -147,11 +147,24 @@ class SeedUpdateCommand extends ContainerAwareCommand
             if ($mapping["type"] & ClassMetadataInfo::TO_MANY) {
                 $collection = $metadata->getFieldValue($entity, $key);
 
+                $oldValues = array_flip(array_map(function($e){ return $e->getId(); }, $collection->getValues()));
+
                 foreach ($value as $childId) {
                     $ref = $this->entityManager->getReference($targetEntity, $childId);
 
+                    if (isset($oldValues[$childId]))
+                        unset($oldValues[$childId]);
+
                     if (! $collection->contains($ref)) {
                         $collection->add($ref);
+                    }
+                }
+
+                // Currently limited to MANY-to-many. Should also work with ONE-to-many, but is untested.
+                if ($mapping["type"] & ClassMetadataInfo::MANY_TO_MANY) {
+                    foreach (array_flip($oldValues) as $childId) {
+                        $ref = $this->entityManager->getReference($targetEntity, $childId);
+                        $collection->removeElement($ref);
                     }
                 }
 
