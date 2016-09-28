@@ -9,20 +9,17 @@
 
 namespace Agit\SeedBundle\Command;
 
-use Agit\BaseBundle\Command\SingletonCommandTrait;
+use Exception;
 use Agit\SeedBundle\Event\SeedEvent;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Agit\BaseBundle\Exception\InternalErrorException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 
 class SeedUpdateCommand extends ContainerAwareCommand
 {
-    use SingletonCommandTrait;
-
     const EVENT_REGISTRATION_KEY = "agit.seed";
 
     private $entries = [];
@@ -36,10 +33,6 @@ class SeedUpdateCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        if (! $this->flock(__FILE__)) {
-            return;
-        }
-
         $this->entityManager = $this->getContainer()->get("doctrine.orm.entity_manager");
 
         $this->getContainer()->get("event_dispatcher")->dispatch(
@@ -83,7 +76,7 @@ class SeedUpdateCommand extends ContainerAwareCommand
                 $data = $seedEntry["data"];
 
                 if (! isset($data[$idField])) {
-                    throw new InternalErrorException("The seed data for $entityClass is missing the mandatory `$idField` field.");
+                    throw new Exception("The seed data for $entityClass is missing the mandatory `$idField` field.");
                 }
 
                 if (isset($entities[$data[$idField]])) {
@@ -132,7 +125,7 @@ class SeedUpdateCommand extends ContainerAwareCommand
         $idFields = $metadata->getIdentifier();
 
         if (! is_array($idFields) || count($idFields) !== 1) {
-            throw new InternalErrorException("Seed entities must have exactly one ID field.");
+            throw new Exception("Seed entities must have exactly one ID field.");
         }
 
         return reset($idFields);
