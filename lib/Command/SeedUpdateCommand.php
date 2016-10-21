@@ -9,14 +9,14 @@
 
 namespace Agit\SeedBundle\Command;
 
-use Exception;
 use Agit\SeedBundle\Event\SeedEvent;
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Exception;
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class SeedUpdateCommand extends ContainerAwareCommand
 {
@@ -45,8 +45,9 @@ class SeedUpdateCommand extends ContainerAwareCommand
 
     public function addSeedEntry($entityName, $entityData, $doUpdate)
     {
-        if (!isset($this->entries[$entityName]))
+        if (! isset($this->entries[$entityName])) {
             $this->entries[$entityName] = [];
+        }
 
         $this->entries[$entityName][] = ["data" => $entityData, "update" => $doUpdate];
     }
@@ -140,13 +141,14 @@ class SeedUpdateCommand extends ContainerAwareCommand
             if ($mapping["type"] & ClassMetadataInfo::TO_MANY) {
                 $collection = $metadata->getFieldValue($entity, $key);
 
-                $oldValues = array_flip(array_map(function($e){ return $e->getId(); }, $collection->getValues()));
+                $oldValues = array_flip(array_map(function ($e) { return $e->getId(); }, $collection->getValues()));
 
                 foreach ($value as $childId) {
                     $ref = $this->entityManager->getReference($targetEntity, $childId);
 
-                    if (isset($oldValues[$childId]))
+                    if (isset($oldValues[$childId])) {
                         unset($oldValues[$childId]);
+                    }
 
                     if (! $collection->contains($ref)) {
                         $collection->add($ref);
@@ -176,6 +178,4 @@ class SeedUpdateCommand extends ContainerAwareCommand
             $this->entityManager->remove($entity);
         }
     }
-
-
 }
