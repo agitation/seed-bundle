@@ -108,6 +108,9 @@ class SeedUpdateCommand extends ContainerAwareCommand
         }
 
         $this->entityManager->flush();
+
+        // clear all result caches to avoid using stale entities
+        $this->entityManager->getConfiguration()->getResultCacheImpl()->deleteAll();
     }
 
     private function getExistingObjects($entityName, $idField, $metadata)
