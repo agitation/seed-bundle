@@ -22,6 +22,15 @@ class SeedUpdateCommand extends ContainerAwareCommand
 {
     const EVENT_REGISTRATION_KEY = "agit.seed";
 
+    /**
+     * @var EntityManager
+     */
+    private $entityManager;
+
+    private $entityNames = [];
+
+    private $metadata = [];
+
     private $entries = [];
 
     protected function configure()
@@ -45,40 +54,44 @@ class SeedUpdateCommand extends ContainerAwareCommand
 
     public function addSeedEntry($entityName, $entityData, $doUpdate)
     {
-        if (! isset($this->entries[$entityName])) {
-            $this->entries[$entityName] = [];
-        }
+        try {
+            // this may fail if a component ships optional entries for entities of a non-existing other component
+            $metadata = $this->entityManager->getClassMetadata($entityName);
 
-        $this->entries[$entityName][] = ["data" => $entityData, "update" => $doUpdate];
+            // resolve to real class name
+            $entityName = $metadata->getName();
+
+            $this->metadata[$entityName] = $metadata;
+
+            // initialize collector for this entity class
+            if (! isset($this->entries[$entityName])) {
+                $this->entries[$entityName] = [];
+            }
+
+            $idField = $this->getIdField($this->metadata[$entityName]);
+
+            if (! isset($entityData[$idField])) {
+                throw new Exception("The seed data for $entityName is missing the mandatory `$idField` field.");
+            }
+
+            $this->entries[$entityName][$entityData[$idField]] = ["data" => $entityData, "update" => $doUpdate];
+        } catch (Exception $e) {
+            // silently ignore
+        }
     }
 
     public function process()
     {
-        $entityClasses = $this->entityManager->getConfiguration()
-            ->getMetadataDriverImpl()->getAllClassNames();
-
         foreach ($this->entries as $entityName => $seedEntries) {
-            $metadata = $this->entityManager->getClassMetadata($entityName);
+            $metadata = $this->metadata[$entityName];
+            $idField = $this->getIdField($metadata);
+            $entities = $this->getExistingObjects($entityName, $idField, $metadata);
 
             // we need to know now if the entity usually has a generator as we will overwrite the generator below
             $usesIdGenerator = $metadata->usesIdGenerator();
 
-            $idField = $this->getIdField($metadata);
-            $entityClass = $metadata->getName();
-
-            // it may be that a component ships (optional) entries for another component that is not installed
-            if (! in_array($entityClass, $entityClasses)) {
-                continue;
-            }
-
-            $entities = $this->getExistingObjects($entityName, $idField, $metadata);
-
             foreach ($seedEntries as $seedEntry) {
                 $data = $seedEntry["data"];
-
-                if (! isset($data[$idField])) {
-                    throw new Exception("The seed data for $entityClass is missing the mandatory `$idField` field.");
-                }
 
                 if (isset($entities[$data[$idField]])) {
                     $entity = $entities[$data[$idField]];
@@ -88,7 +101,7 @@ class SeedUpdateCommand extends ContainerAwareCommand
                         continue;
                     }
                 } else {
-                    $entity = new $entityClass();
+                    $entity = new $entityName();
                 }
 
                 foreach ($data as $key => $value) {
@@ -97,7 +110,7 @@ class SeedUpdateCommand extends ContainerAwareCommand
 
                 $this->entityManager->persist($entity);
 
-                // we overwrite the ID generator here, because we ALWAYS need fixed IDs
+                // we temporarily overwrite the ID generator here, because we ALWAYS need fixed IDs
                 $metadata->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
             }
 
