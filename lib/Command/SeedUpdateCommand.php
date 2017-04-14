@@ -33,6 +33,8 @@ class SeedUpdateCommand extends ContainerAwareCommand
 
     private $entries = [];
 
+    private $output;
+
     protected function configure()
     {
         $this
@@ -43,6 +45,7 @@ class SeedUpdateCommand extends ContainerAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->entityManager = $this->getContainer()->get("doctrine.orm.entity_manager");
+        $this->output = $output;
 
         $this->getContainer()->get("event_dispatcher")->dispatch(
             self::EVENT_REGISTRATION_KEY,
@@ -76,7 +79,7 @@ class SeedUpdateCommand extends ContainerAwareCommand
 
             $this->entries[$entityName][$entityData[$idField]] = ["data" => $entityData, "update" => $doUpdate];
         } catch (Exception $e) {
-            // silently ignore
+            $this->output->writeln("Entity $entityName does not exist.", OutputInterface::VERBOSITY_VERBOSE);
         }
     }
 
