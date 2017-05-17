@@ -1,0 +1,4 @@
+services:
+    agit.seed.processor:
+        class: Agit\SeedBundle\Service\SeedProcessor
+        arguments: [ "@doctrine.orm.entity_manager" ]
