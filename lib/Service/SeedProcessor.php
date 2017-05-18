@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Exception;
 
 class SeedProcessor
 {
@@ -34,45 +35,55 @@ class SeedProcessor
 
     public function process(SeedCollection $collection, $removeObsolete = false)
     {
-        foreach ($collection->getData() as $entityName => $seedEntries) {
-            $metadata = $collection->getMeta($entityName);
-            $idField = $this->getIdField($metadata);
-            $entities = $this->getExistingObjects($entityName, $idField, $metadata);
+        try {
+            $this->entityManager->beginTransaction();
 
-            // we need to know now if the entity usually has a generator as we will overwrite the generator below
-            $usesIdGenerator = $metadata->usesIdGenerator();
+            foreach ($collection->getData() as $entityName => $seedEntries) {
+                $metadata = $collection->getMeta($entityName);
+                $idField = $this->getIdField($metadata);
+                $entities = $this->getExistingObjects($entityName, $idField, $metadata);
 
-            foreach ($seedEntries as $seedEntry) {
-                $data = $seedEntry["data"];
+                // we need to know now if the entity usually has a generator as we will overwrite the generator below
+                $usesIdGenerator = $metadata->usesIdGenerator();
 
-                if (isset($entities[$data[$idField]])) {
-                    $entity = $entities[$data[$idField]];
-                    unset($entities[$data[$idField]]);
+                foreach ($seedEntries as $seedEntry) {
+                    $data = $seedEntry["data"];
 
-                    if (! $seedEntry["update"]) {
-                        continue;
+                    if (isset($entities[$data[$idField]])) {
+                        $entity = $entities[$data[$idField]];
+                        unset($entities[$data[$idField]]);
+
+                        if (! $seedEntry["update"]) {
+                            continue;
+                        }
+                    } else {
+                        $entity = new $entityName();
                     }
-                } else {
-                    $entity = new $entityName();
+
+                    foreach ($data as $key => $value) {
+                        $this->setObjectValue($entity, $key, $value, $metadata);
+                    }
+
+                    $this->entityManager->persist($entity);
+
+                    // we temporarily overwrite the ID generator here, because we ALWAYS need fixed IDs
+                    $metadata->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
                 }
 
-                foreach ($data as $key => $value) {
-                    $this->setObjectValue($entity, $key, $value, $metadata);
+                // remove old entries, but only for entities with natural keys
+                if ($removeObsolete && ! $usesIdGenerator) {
+                    $this->removeObsoleteObjects($entities);
                 }
 
-                $this->entityManager->persist($entity);
-
-                // we temporarily overwrite the ID generator here, because we ALWAYS need fixed IDs
-                $metadata->setIdGeneratorType(ClassMetadata::GENERATOR_TYPE_NONE);
+                // we flush for each entity to make lifecycle events work on related entitites
+                $this->entityManager->flush();
             }
 
-            // remove old entries, but only for entities with natural keys
-            if ($removeObsolete && ! $usesIdGenerator) {
-                $this->removeObsoleteObjects($entities);
-            }
+            $this->entityManager->commit();
+        } catch (Exception $e) {
+            $this->entityManager->rollback();
+            throw $e;
         }
-
-        $this->entityManager->flush();
 
         // clear all result caches to avoid using stale entities
         $this->entityManager->getConfiguration()->getResultCacheImpl()->deleteAll();
