@@ -74,11 +74,9 @@ class SeedProcessor
                 if ($removeObsolete && ! $usesIdGenerator) {
                     $this->removeObsoleteObjects($entities);
                 }
-
-                // we flush for each entity to make lifecycle events work on related entitites
-                $this->entityManager->flush();
             }
 
+            $this->entityManager->flush();
             $this->entityManager->commit();
         } catch (Exception $e) {
             $this->entityManager->rollback();
