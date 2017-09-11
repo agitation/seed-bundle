@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 /*
  * @package    agitation/seed-bundle
  * @link       http://github.com/agitation/seed-bundle
@@ -35,10 +35,12 @@ class SeedProcessor
 
     public function process(SeedCollection $collection, $removeObsolete = false)
     {
-        try {
+        try
+        {
             $this->entityManager->beginTransaction();
 
-            foreach ($collection->getData() as $entityName => $seedEntries) {
+            foreach ($collection->getData() as $entityName => $seedEntries)
+            {
                 $metadata = $collection->getMeta($entityName);
                 $idField = $this->getIdField($metadata);
                 $entities = $this->getExistingObjects($entityName, $idField, $metadata);
@@ -46,21 +48,27 @@ class SeedProcessor
                 // we need to know now if the entity usually has a generator as we will overwrite the generator below
                 $usesIdGenerator = $metadata->usesIdGenerator();
 
-                foreach ($seedEntries as $seedEntry) {
-                    $data = $seedEntry["data"];
+                foreach ($seedEntries as $seedEntry)
+                {
+                    $data = $seedEntry['data'];
 
-                    if (isset($entities[$data[$idField]])) {
+                    if (isset($entities[$data[$idField]]))
+                    {
                         $entity = $entities[$data[$idField]];
                         unset($entities[$data[$idField]]);
 
-                        if (! $seedEntry["update"]) {
+                        if (! $seedEntry['update'])
+                        {
                             continue;
                         }
-                    } else {
+                    }
+                    else
+                    {
                         $entity = new $entityName();
                     }
 
-                    foreach ($data as $key => $value) {
+                    foreach ($data as $key => $value)
+                    {
                         $this->setObjectValue($entity, $key, $value, $metadata);
                     }
 
@@ -71,15 +79,19 @@ class SeedProcessor
                 }
 
                 // remove old entries, but only for entities with natural keys
-                if ($removeObsolete && ! $usesIdGenerator) {
+                if ($removeObsolete && ! $usesIdGenerator)
+                {
                     $this->removeObsoleteObjects($entities);
                 }
             }
 
             $this->entityManager->flush();
             $this->entityManager->commit();
-        } catch (Exception $e) {
+        }
+        catch (Exception $e)
+        {
             $this->entityManager->rollback();
+
             throw $e;
         }
 
@@ -91,7 +103,8 @@ class SeedProcessor
     {
         $entities = [];
 
-        foreach ($this->entityManager->getRepository($entityName)->findAll() as $entity) {
+        foreach ($this->entityManager->getRepository($entityName)->findAll() as $entity)
+        {
             $entities[$metadata->getFieldValue($entity, $idField)] = $entity;
         }
 
@@ -100,37 +113,48 @@ class SeedProcessor
 
     private function setObjectValue($entity, $key, $value, $metadata)
     {
-        if ($value && isset($metadata->associationMappings[$key])) {
+        if ($value && isset($metadata->associationMappings[$key]))
+        {
             $mapping = $metadata->getAssociationMapping($key);
-            $targetEntity = $metadata->associationMappings[$key]["targetEntity"];
+            $targetEntity = $metadata->associationMappings[$key]['targetEntity'];
 
-            if ($mapping["type"] & ClassMetadataInfo::TO_MANY) {
+            if ($mapping['type'] & ClassMetadataInfo::TO_MANY)
+            {
                 $collection = $metadata->getFieldValue($entity, $key);
 
-                $oldValues = array_flip(array_map(function ($e) { return $e->getId(); }, $collection->getValues()));
+                $oldValues = array_flip(array_map(function ($e) {
+                    return $e->getId();
+                }, $collection->getValues()));
 
-                foreach ($value as $childId) {
+                foreach ($value as $childId)
+                {
                     $ref = $this->entityManager->getReference($targetEntity, $childId);
 
-                    if (isset($oldValues[$childId])) {
+                    if (isset($oldValues[$childId]))
+                    {
                         unset($oldValues[$childId]);
                     }
 
-                    if (! $collection->contains($ref)) {
+                    if (! $collection->contains($ref))
+                    {
                         $collection->add($ref);
                     }
                 }
 
                 // Currently limited to MANY-to-many. Should also work with ONE-to-many, but is untested.
-                if ($mapping["type"] & ClassMetadataInfo::MANY_TO_MANY) {
-                    foreach (array_flip($oldValues) as $childId) {
+                if ($mapping['type'] & ClassMetadataInfo::MANY_TO_MANY)
+                {
+                    foreach (array_flip($oldValues) as $childId)
+                    {
                         $ref = $this->entityManager->getReference($targetEntity, $childId);
                         $collection->removeElement($ref);
                     }
                 }
 
                 $value = $collection;
-            } else {
+            }
+            else
+            {
                 $value = $this->entityManager->getReference($targetEntity, $value);
             }
         }
@@ -140,7 +164,8 @@ class SeedProcessor
 
     private function removeObsoleteObjects($entities)
     {
-        foreach ($entities as $entity) {
+        foreach ($entities as $entity)
+        {
             $this->entityManager->remove($entity);
         }
     }

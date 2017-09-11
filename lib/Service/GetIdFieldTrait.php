@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 /*
  * @package    agitation/seed-bundle
  * @link       http://github.com/agitation/seed-bundle
@@ -18,8 +18,9 @@ trait GetIdFieldTrait
     {
         $idFields = $metadata->getIdentifier();
 
-        if (! is_array($idFields) || count($idFields) !== 1) {
-            throw new Exception("Seed entities must have exactly one ID field.");
+        if (! is_array($idFields) || count($idFields) !== 1)
+        {
+            throw new Exception('Seed entities must have exactly one ID field.');
         }
 
         return reset($idFields);

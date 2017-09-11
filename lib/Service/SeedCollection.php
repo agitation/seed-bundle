@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 /*
  * @package    agitation/seed-bundle
  * @link       http://github.com/agitation/seed-bundle
@@ -26,19 +26,21 @@ class SeedCollection
         $this->metadata[$entityName] = $metadata;
 
         // initialize collector for this entity class
-        if (! isset($this->data[$entityName])) {
+        if (! isset($this->data[$entityName]))
+        {
             $this->data[$entityName] = [];
         }
 
         $idField = $this->getIdField($this->metadata[$entityName]);
 
-        if (! isset($entityData[$idField])) {
+        if (! isset($entityData[$idField]))
+        {
             throw new Exception("The seed data for $entityName is missing the mandatory `$idField` field.");
         }
 
         $this->data[$entityName][$entityData[$idField]] = [
-            "data"   => $entityData,
-            "update" => $doUpdate
+            'data' => $entityData,
+            'update' => $doUpdate
         ];
     }
 
