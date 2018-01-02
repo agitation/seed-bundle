@@ -1,10 +1,6 @@
 {
     "name": "agitation/seed-bundle",
     "type": "symfony-bundle",
-    "require": {
-        "php": ">=5.4.9",
-        "symfony/symfony": "2.8.*"
-    },
     "autoload": {
         "psr-4": {
             "Agit\\SeedBundle\\": "lib/"
